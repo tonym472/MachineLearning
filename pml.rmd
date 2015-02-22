@@ -1,0 +1,134 @@
+---
+output: pdf_document
+---
+
+###Practical Machine Project.
+
+####Executive Summary:
+
+Human Activity Recognition has become a significant research area.  Using devices such as Jawbone 
+Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal
+activity relatively inexpensively.  In this project, your goal will be to use data from 
+accelerometers on the belt, forearm, arm, and dumbell of 6 participants and predict the manner in
+which they did the exercise. There are five classes of activity.  They are sitting, sitting down,
+standing, standing up and walking.   
+
+Using the cross validation method, multiple models were developed and tested.  The model with the
+smallest error was selected to predict the 20 cases in the pml_tetsing file.
+
+####Data Processing
+
+Two files have been provided for this project.  A training file and a testing file.  The testing
+file will be used for the project submission.  The training dataset will be further split into
+train and test for model development and validation.  Utilizing the head and str functions, we'll
+review the structure of the data.
+
+Many data points have "NA" values and will need to be removed from the data.  Additionally, columns
+with values of #DIV/0! will also need to be handled.
+
+```{r echo=TRUE}
+testing_tmp = read.csv("pml-testing.csv", header = TRUE,na.strings=c("","NA"))
+training_tmp = read.csv("pml-training.csv", header = TRUE,na.strings=c("","NA"))
+str(training_tmp)
+```
+
+Review the values and frequency of the dependent 'classe' variable. 
+
+```{r echo=TRUE}
+table(training_tmp$classe)
+```
+
+Remove NA's and keep only data elements used for modeling.
+
+```{r echo=TRUE}
+training_tmp1 <- na.omit(training_tmp)
+
+training_tmp1 <- training_tmp1[,c(8:11,37:49,60:68,84:86,113:124,140,151:160)]
+summary(training_tmp1)
+```
+
+
+###Model Summary
+
+Three models with differing splits between train and test have been developed and scored.  Of the
+three models, the best performing model based on the estimated error from cross-validation is the
+last model developed.
+
+This model was developed with a 80/20 split between train and test.  The estimated error is 26%
+which is the least of the three models.  
+
+
+Create the initial training and testing modeling datasets.  The split between the training and
+testing datasets will be 70/30. 
+
+```{r echo=TRUE}
+library(caret)
+inTrain1 <- createDataPartition(y=training_tmp1$classe,
+                               p=0.7,list=FALSE)
+training <- training_tmp1[inTrain1,]
+testing <- training_tmp1[-inTrain1,]
+dim(training); dim(testing)
+```
+
+Create, score and cross validate the initial model.
+
+```{r echo=TRUE}
+library(caret)
+modFit <- train(classe ~ .,data=training,method="rf",prox=TRUE)
+modFit
+
+pred <- predict(modFit,testing);testing$predRight <- pred==testing$classe
+table(pred,testing$classe)
+print(modFit$finalModel)
+```
+
+Create, score and cross validate the second version of the model.  The split between training and
+testing is 50/50.
+
+```{r echo=TRUE}
+library(caret)
+inTrain2 <- createDataPartition(y=training_tmp1$classe,
+                               p=0.5,list=FALSE)
+training2 <- training_tmp1[inTrain2,]
+testing2 <- training_tmp1[-inTrain2,]
+dim(training2); dim(testing2)
+```
+
+
+```{r echo=TRUE}
+library(caret)
+modFit2 <- train(classe ~ .,data=training2,method="rf",prox=TRUE)
+modFit2
+
+pred <- predict(modFit,testing2);testing2$predRight <- pred==testing2$classe
+table(pred,testing2$classe)
+print(modFit2$finalModel)
+```
+
+
+Create the final training and testing modeling datasets.  The split between the training and
+testing datasets will be 80/20.
+
+```{r echo=TRUE}
+library(caret)
+inTrain3 <- createDataPartition(y=training_tmp1$classe,
+                               p=0.8,list=FALSE)
+training3 <- training_tmp1[inTrain3,]
+testing3 <- training_tmp1[-inTrain3,]
+dim(training3); dim(testing3)
+```
+
+
+
+```{r echo=TRUE}
+library(caret)
+modFit3 <- train(classe ~ .,data=training3,method="rf",prox=TRUE)
+modFit3
+
+pred <- predict(modFit,testing3);testing3$predRight <- pred==testing3$classe
+table(pred,testing3$classe)
+print(modFit3$finalModel)
+```
+
+
+
